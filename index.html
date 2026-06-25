@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JayBy — Automação de Ebooks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <a class="nav-logo" href="index.html"><img src="img/JayBy - cabeça.png" alt="JayBy"></a>
+    <div class="nav-links">
+      <a href="saber-mais.html">Saber Mais</a>
+      <a href="#recursos">Adicionais</a>
+    </div>
+    <div class="nav-actions">
+      <a class="btn btn-ghost" href="login.html">Entrar</a>
+      <a class="btn btn-solid" href="cadastro.html">Começar agora</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">automação de ebooks</div>
+    <img class="hero-lockup" src="img/logo JayBy - Texto.png" alt="JayBy">
+    <p class="hero-tagline">Do nicho ao ebook pronto, em poucos segundos.</p>
+    <div class="hero-actions">
+      <a class="btn btn-solid btn-lg" href="#demo">Gerar meu ebook</a>
+      <a class="btn btn-outline btn-lg" href="cadastro.html">Criar conta</a>
+    </div>
+  </header>
+
+  <div class="section" id="demo">
+    <div class="section-head" style="text-align:center;margin:0 auto 32px;">
+      <h2>Gere seu primeiro ebook</h2>
+      <p style="margin:0 auto;">Digite um tema e a IA já valida o nicho e escreve o ebook completo pra você.</p>
+    </div>
+
+    <div class="theme-dock">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="themeInput" placeholder="ex: finanças pessoais para autônomos, receitas fit, adestramento de cães...">
+      <button class="btn btn-solid" id="btnNiches" style="margin:4px 4px 4px 0;">Gerar nichos</button>
+    </div>
+
+    <div id="nicheLoading"></div>
+    <div id="nicheError"></div>
+    <div class="cards niche-grid" id="nicheGrid" style="margin-top:18px;"></div>
+
+    <div id="ebookTrigger" style="display:none;margin-top:18px;"></div>
+    <div id="ebookLoading"></div>
+    <div id="ebookError"></div>
+    <div class="cards" id="ebookGrid" style="margin-top:18px;"></div>
+  </div>
+
+  <div class="section" id="recursos" style="padding-top:0;">
+    <div class="section-head">
+      <h2>Leve esse ebook além</h2>
+      <p>Adicione a copy de vendas e o roteiro de vídeo desse mesmo produto, quando quiser.</p>
+    </div>
+
+    <div class="feature-teaser-grid">
+      <a class="feature-teaser-card" href="copy-de-vendas.html">
+        <span class="pro-badge">ADICIONAL</span>
+        <div class="module-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-7-7 18-2.5-7.5z"/></svg>
+        </div>
+        <h3>Copy de vendas que converte</h3>
+        <p>Headline, bullets e chamada para ação prontos pra colar na sua página de checkout.</p>
+        <span class="feature-link">Saiba como funciona →</span>
+      </a>
+      <a class="feature-teaser-card" href="roteiro-de-video.html">
+        <span class="pro-badge">ADICIONAL</span>
+        <div class="module-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M17 9l4-2.5v11L17 15"/></svg>
+        </div>
+        <h3>Roteiro de vídeo pronto pra gravar</h3>
+        <p>Gancho, corpo e CTA estruturados pra você narrar e divulgar nos grupos.</p>
+        <span class="feature-link">Saiba como funciona →</span>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo-box"><img src="img/Captura de tela 2026-06-24 020343.png" alt="JayBy"></div>
+    <div class="footer-links">
+      <a href="saber-mais.html">Saber Mais</a>
+      <a href="#recursos"></a>
+      <a href="cadastro.html">Criar Conta</a>
+    </div>
+    <div class="footer-copy">© 2026 JayBy. Todos os direitos reservados.</div>
+  </footer>
+
+<script>
+const API_URL = "https://api.anthropic.com/v1/messages";
+const MODEL = "claude-sonnet-4-6";
+let selectedNiche = null;
+
+function loadingHTML(msg){
+  return `<div class="loading-row"><div class="dots"><span></span><span></span><span></span></div>${msg}</div>`;
+}
+function errorHTML(msg){
+  return `<div class="error-box">${msg}</div>`;
+}
+async function callClaude(systemPrompt, userPrompt){
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }]
+    })
+  });
+  if(!res.ok){ throw new Error("Falha na chamada à API (" + res.status + ")"); }
+  const data = await res.json();
+  const text = (data.content || []).map(b => b.text || "").join("\n");
+  const clean = text.replace(/```json|```/g, "").trim();
+  return JSON.parse(clean);
+}
+
+document.getElementById('btnNiches').addEventListener('click', async () => {
+  const theme = document.getElementById('themeInput').value.trim();
+  const nicheError = document.getElementById('nicheError');
+  nicheError.innerHTML = "";
+  if(!theme){
+    nicheError.innerHTML = errorHTML("Digite um tema antes de gerar os nichos.");
+    return;
+  }
+  document.getElementById('nicheGrid').innerHTML = "";
+  document.getElementById('ebookTrigger').style.display = "none";
+  document.getElementById('ebookGrid').innerHTML = "";
+  document.getElementById('nicheLoading').innerHTML = loadingHTML("validando ângulos de nicho...");
+
+  try{
+    const sys = "Você é um estrategista de produtos digitais. Responda SOMENTE com um objeto JSON válido, sem markdown, sem texto antes ou depois. Formato exato: {\"niches\":[{\"title\":string,\"audience\":string,\"pain\":string,\"angle\":string}]}. Gere exatamente 3 nichos. Cada campo deve ter no máximo 16 palavras, em português do Brasil, específico e vendável para ebooks de baixo custo divulgados em grupos de redes sociais.";
+    const result = await callClaude(sys, "Tema base: " + theme);
+    renderNiches(result.niches || []);
+  }catch(e){
+    nicheError.innerHTML = errorHTML("Não consegui gerar os nichos agora. Tente novamente em alguns segundos.");
+  }finally{
+    document.getElementById('nicheLoading').innerHTML = "";
+  }
+});
+
+function renderNiches(niches){
+  document.getElementById('nicheGrid').innerHTML = niches.map((n, i) => `
+    <div class="card pickable" data-idx="${i}">
+      <span class="tag">ângulo ${i+1}</span>
+      <h3>${n.title}</h3>
+      <p><b>Público:</b> ${n.audience}<br><b>Dor:</b> ${n.pain}<br><b>Gancho:</b> ${n.angle}</p>
+    </div>
+  `).join("");
+
+  document.querySelectorAll("#nicheGrid .card").forEach(card => {
+    card.addEventListener("click", () => {
+      document.querySelectorAll("#nicheGrid .card").forEach(c => c.classList.remove("picked"));
+      card.classList.add("picked");
+      selectedNiche = niches[parseInt(card.dataset.idx)];
+      document.getElementById('ebookTrigger').style.display = "block";
+      document.getElementById('ebookTrigger').innerHTML = `
+        <div class="card" style="text-align:center;">
+          <p style="margin-bottom:12px;">Nicho selecionado: <b>${selectedNiche.title}</b></p>
+          <button class="btn btn-solid" id="btnEbook">Gerar ebook completo</button>
+        </div>`;
+      document.getElementById('btnEbook').addEventListener('click', gerarEbook);
+    });
+  });
+}
+
+async function gerarEbook(){
+  const ebookError = document.getElementById('ebookError');
+  ebookError.innerHTML = "";
+  document.getElementById('ebookGrid').innerHTML = "";
+  document.getElementById('ebookLoading').innerHTML = loadingHTML("escrevendo o ebook...");
+
+  try{
+    const sys = "Você é uma equipe de produção de infoprodutos. Responda SOMENTE com JSON válido, sem markdown. Formato exato: {\"title\":string,\"subtitle\":string,\"intro\":string,\"chapters\":[{\"title\":string,\"summary\":string}]}. Gere exatamente 5 capítulos. Tudo em português do Brasil, direto, campos curtos (intro com no máximo 40 palavras, demais com no máximo 18 palavras).";
+    const userMsg = `Nicho: ${selectedNiche.title}. Público: ${selectedNiche.audience}. Dor: ${selectedNiche.pain}. Gancho: ${selectedNiche.angle}.`;
+    const ebook = await callClaude(sys, userMsg);
+    document.getElementById('ebookGrid').innerHTML = `
+      <div class="card pack-card">
+        <span class="tag">seu ebook</span>
+        <h3>${ebook.title}</h3>
+        <div class="field"><span class="field-label">subtítulo</span><p>${ebook.subtitle}</p></div>
+        <div class="field"><span class="field-label">introdução</span><p>${ebook.intro}</p></div>
+        <div class="field"><span class="field-label">capítulos</span>
+          <ol>${ebook.chapters.map(c => `<li><b>${c.title}</b> — ${c.summary}</li>`).join("")}</ol>
+        </div>
+        <p style="margin-top:16px;font-size:13.5px;color:var(--text-soft);">Seu ebook está pronto. Quer ir além? Adicione a copy de vendas e o roteiro de vídeo desse mesmo produto. <a class="link-teal" href="cadastro.html">Ver como</a></p>
+      </div>`;
+  }catch(e){
+    ebookError.innerHTML = errorHTML("Não consegui gerar o ebook agora. Tente de novo.");
+  }finally{
+    document.getElementById('ebookLoading').innerHTML = "";
+  }
+}
+</script>
+</body>
+</html>

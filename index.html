@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<script src="theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JayBy — Automação de Ebooks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,6 +18,10 @@
       <a href="#recursos">Adicionais</a>
     </div>
     <div class="nav-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
+  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
       <a class="btn btn-ghost" href="login.html">Entrar</a>
       <a class="btn btn-solid" href="cadastro.html">Começar agora</a>
     </div>
@@ -83,7 +88,7 @@
   </div>
 
   <footer>
-    <div class="footer-logo-box"><img src="img/Captura de tela 2026-06-24 020343.png" alt="JayBy"></div>
+    <div class="footer-logo-box"><img src="img/logo JayBy .png" alt="JayBy"></div>
     <div class="footer-links">
       <a href="saber-mais.html">Saber Mais</a>
       <a href="#recursos"></a>
@@ -92,9 +97,10 @@
     <div class="footer-copy">© 2026 JayBy. Todos os direitos reservados.</div>
   </footer>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <script>
-const API_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-sonnet-4-6";
+const BACKEND_URL = "http://localhost:3000";
 let selectedNiche = null;
 
 function loadingHTML(msg){
@@ -103,22 +109,29 @@ function loadingHTML(msg){
 function errorHTML(msg){
   return `<div class="error-box">${msg}</div>`;
 }
-async function callClaude(systemPrompt, userPrompt){
-  const res = await fetch(API_URL, {
+async function gerarNichosBackend(tema){
+  const res = await fetch(BACKEND_URL + "/api/gerar-nichos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tema })
+  });
+  if(!res.ok){ throw new Error("Falha na chamada ao backend (" + res.status + ")"); }
+  return await res.json();
+}
+
+async function gerarEbookBackend(niche){
+  const res = await fetch(BACKEND_URL + "/api/gerar-ebook", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 1000,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }]
+      title: niche.title,
+      audience: niche.audience,
+      pain: niche.pain,
+      angle: niche.angle
     })
   });
-  if(!res.ok){ throw new Error("Falha na chamada à API (" + res.status + ")"); }
-  const data = await res.json();
-  const text = (data.content || []).map(b => b.text || "").join("\n");
-  const clean = text.replace(/```json|```/g, "").trim();
-  return JSON.parse(clean);
+  if(!res.ok){ throw new Error("Falha na chamada ao backend (" + res.status + ")"); }
+  return await res.json();
 }
 
 document.getElementById('btnNiches').addEventListener('click', async () => {
@@ -135,8 +148,7 @@ document.getElementById('btnNiches').addEventListener('click', async () => {
   document.getElementById('nicheLoading').innerHTML = loadingHTML("validando ângulos de nicho...");
 
   try{
-    const sys = "Você é um estrategista de produtos digitais. Responda SOMENTE com um objeto JSON válido, sem markdown, sem texto antes ou depois. Formato exato: {\"niches\":[{\"title\":string,\"audience\":string,\"pain\":string,\"angle\":string}]}. Gere exatamente 3 nichos. Cada campo deve ter no máximo 16 palavras, em português do Brasil, específico e vendável para ebooks de baixo custo divulgados em grupos de redes sociais.";
-    const result = await callClaude(sys, "Tema base: " + theme);
+    const result = await gerarNichosBackend(theme);
     renderNiches(result.niches || []);
   }catch(e){
     nicheError.innerHTML = errorHTML("Não consegui gerar os nichos agora. Tente novamente em alguns segundos.");
@@ -177,9 +189,7 @@ async function gerarEbook(){
   document.getElementById('ebookLoading').innerHTML = loadingHTML("escrevendo o ebook...");
 
   try{
-    const sys = "Você é uma equipe de produção de infoprodutos. Responda SOMENTE com JSON válido, sem markdown. Formato exato: {\"title\":string,\"subtitle\":string,\"intro\":string,\"chapters\":[{\"title\":string,\"summary\":string}]}. Gere exatamente 5 capítulos. Tudo em português do Brasil, direto, campos curtos (intro com no máximo 40 palavras, demais com no máximo 18 palavras).";
-    const userMsg = `Nicho: ${selectedNiche.title}. Público: ${selectedNiche.audience}. Dor: ${selectedNiche.pain}. Gancho: ${selectedNiche.angle}.`;
-    const ebook = await callClaude(sys, userMsg);
+    const ebook = await gerarEbookBackend(selectedNiche);
     document.getElementById('ebookGrid').innerHTML = `
       <div class="card pack-card">
         <span class="tag">seu ebook</span>
@@ -189,13 +199,63 @@ async function gerarEbook(){
         <div class="field"><span class="field-label">capítulos</span>
           <ol>${ebook.chapters.map(c => `<li><b>${c.title}</b> — ${c.summary}</li>`).join("")}</ol>
         </div>
+        <button class="btn btn-solid" id="btnDownloadPdf" style="margin-top:16px;">Baixar ebook em PDF</button>
         <p style="margin-top:16px;font-size:13.5px;color:var(--text-soft);">Seu ebook está pronto. Quer ir além? Adicione a copy de vendas e o roteiro de vídeo desse mesmo produto. <a class="link-teal" href="cadastro.html">Ver como</a></p>
       </div>`;
+    document.getElementById('btnDownloadPdf').addEventListener('click', () => downloadEbookPDF(ebook));
   }catch(e){
     ebookError.innerHTML = errorHTML("Não consegui gerar o ebook agora. Tente de novo.");
   }finally{
     document.getElementById('ebookLoading').innerHTML = "";
   }
+
+  function downloadEbookPDF(ebook){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const marginLeft = 20;
+  const maxWidth = 170;
+  let y = 25;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(28, 43, 51); // navy-deep
+  const titleLines = doc.splitTextToSize(ebook.title, maxWidth);
+  doc.text(titleLines, marginLeft, y);
+  y += titleLines.length * 9 + 4;
+
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(13);
+  doc.setTextColor(92, 116, 128); // text-soft
+  const subtitleLines = doc.splitTextToSize(ebook.subtitle, maxWidth);
+  doc.text(subtitleLines, marginLeft, y);
+  y += subtitleLines.length * 7 + 10;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(40, 40, 40);
+  const introLines = doc.splitTextToSize(ebook.intro, maxWidth);
+  doc.text(introLines, marginLeft, y);
+  y += introLines.length * 6 + 12;
+
+  ebook.chapters.forEach((cap, i) => {
+    if(y > 260){ doc.addPage(); y = 25; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(0, 153, 153); // teal-deep
+    const chapTitleLines = doc.splitTextToSize(`Capítulo ${i+1}: ${cap.title}`, maxWidth);
+    doc.text(chapTitleLines, marginLeft, y);
+    y += chapTitleLines.length * 7 + 3;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(40, 40, 40);
+    const summaryLines = doc.splitTextToSize(cap.summary, maxWidth);
+    doc.text(summaryLines, marginLeft, y);
+    y += summaryLines.length * 6 + 10;
+  });
+
+  doc.save(ebook.title.replace(/[^a-zA-Z0-9]+/g, "_").substring(0, 60) + ".pdf");
+}
 }
 </script>
 </body>

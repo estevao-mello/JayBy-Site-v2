@@ -668,3 +668,20 @@ footer{
 [data-theme="dark"] .theme-toggle .icon-moon{display:block;}
 [data-theme="dark"] .theme-toggle{border-color:var(--line-dark);color:var(--text-dark);}
 [data-theme="dark"] .theme-toggle:hover{color:var(--teal);}
+
+/* CAPÍTULOS DO EBOOK */
+.chapters-list{margin-top:8px;}
+.chapter-block{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--line);}
+.chapter-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.chapter-block h4{
+  font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;
+  color:var(--teal-deep);margin:0 0 10px;
+}
+.chapter-content p{
+  font-size:14px;color:var(--navy);line-height:1.7;
+  margin:0 0 10px;
+}
+.chapter-content p:last-child{margin-bottom:0;}
+[data-theme="dark"] .chapter-block{border-bottom-color:var(--line-dark);}
+[data-theme="dark"] .chapter-block h4{color:var(--teal);}
+[data-theme="dark"] .chapter-content p{color:var(--text-dark);}

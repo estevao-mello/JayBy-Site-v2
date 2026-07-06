@@ -100,7 +100,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-const BACKEND_URL = "http://localhost:3000";
+const BACKEND_URL = "https://jayby-backend-production.up.railway.app";
 let selectedNiche = null;
 
 function loadingHTML(msg){
@@ -197,8 +197,12 @@ async function gerarEbook(){
         <div class="field"><span class="field-label">subtítulo</span><p>${ebook.subtitle}</p></div>
         <div class="field"><span class="field-label">introdução</span><p>${ebook.intro}</p></div>
         <div class="field"><span class="field-label">capítulos</span>
-          <ol>${ebook.chapters.map(c => `<li><b>${c.title}</b> — ${c.summary}</li>`).join("")}</ol>
-        </div>
+          <div class="chapters-list">${ebook.chapters.map((c, i) => `
+  <div class="chapter-block">
+    <h4>Capítulo ${i+1}: ${c.title}</h4>
+    <div class="chapter-content">${c.content.split('\n').filter(p => p.trim()).map(p => `<p>${p}</p>`).join('')}</div>
+  </div>`).join("")}</div>
+          </div>
         <button class="btn btn-solid" id="btnDownloadPdf" style="margin-top:16px;">Baixar ebook em PDF</button>
         <p style="margin-top:16px;font-size:13.5px;color:var(--text-soft);">Seu ebook está pronto. Quer ir além? Adicione a copy de vendas e o roteiro de vídeo desse mesmo produto. <a class="link-teal" href="cadastro.html">Ver como</a></p>
       </div>`;
@@ -238,20 +242,25 @@ async function gerarEbook(){
   y += introLines.length * 6 + 12;
 
   ebook.chapters.forEach((cap, i) => {
-    if(y > 260){ doc.addPage(); y = 25; }
+    if(y > 250){ doc.addPage(); y = 25; }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    doc.setTextColor(0, 153, 153); // teal-deep
+    doc.setTextColor(0, 153, 153);
     const chapTitleLines = doc.splitTextToSize(`Capítulo ${i+1}: ${cap.title}`, maxWidth);
     doc.text(chapTitleLines, marginLeft, y);
-    y += chapTitleLines.length * 7 + 3;
+    y += chapTitleLines.length * 7 + 4;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(40, 40, 40);
-    const summaryLines = doc.splitTextToSize(cap.summary, maxWidth);
-    doc.text(summaryLines, marginLeft, y);
-    y += summaryLines.length * 6 + 10;
+    const paragraphs = cap.content.split('\n').filter(p => p.trim());
+    paragraphs.forEach(paragraph => {
+      if(y > 265){ doc.addPage(); y = 25; }
+      const paraLines = doc.splitTextToSize(paragraph, maxWidth);
+      doc.text(paraLines, marginLeft, y);
+      y += paraLines.length * 6 + 5;
+    });
+    y += 6;
   });
 
   doc.save(ebook.title.replace(/[^a-zA-Z0-9]+/g, "_").substring(0, 60) + ".pdf");

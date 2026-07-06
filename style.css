@@ -685,3 +685,78 @@ footer{
 [data-theme="dark"] .chapter-block{border-bottom-color:var(--line-dark);}
 [data-theme="dark"] .chapter-block h4{color:var(--teal);}
 [data-theme="dark"] .chapter-content p{color:var(--text-dark);}
+
+/* RESPONSIVIDADE MOBILE */
+@media (max-width:600px){
+
+  /* Navbar */
+  .navbar{
+    padding:14px 16px;
+    grid-template-columns:auto 1fr auto;
+  }
+  .nav-logo img{height:28px;}
+  .nav-actions{gap:8px;}
+  .nav-actions .btn-ghost{display:none;}
+  .btn-solid{padding:10px 16px;font-size:13px;}
+
+  /* Hero */
+  .hero{padding:40px 16px 24px;}
+  .hero-tagline{font-size:22px;}
+  .hero-sub{font-size:14px;}
+  .hero-actions{
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
+  .hero-actions .btn{width:100%;max-width:280px;justify-content:center;}
+
+  /* Seção principal */
+  .section{padding:32px 16px 60px;}
+  .section-head h2{font-size:22px;}
+  .theme-dock{padding:6px;}
+  .theme-dock input{font-size:14px;}
+
+  /* Cards de nicho */
+  #nicheGrid{grid-template-columns:1fr;}
+
+  /* Cards adicionais */
+  .feature-teaser-grid{grid-template-columns:1fr;}
+
+  /* Rodapé */
+  footer{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    padding:28px 16px;
+    gap:14px;
+  }
+  .footer-logo-box{
+    width:auto;
+    height:auto;
+    position:static;
+  }
+  .footer-logo-box img{
+    position:static;
+    transform:none;
+    height:40px;
+    width:auto;
+  }
+  .footer-links{
+    justify-self:unset;
+    gap:16px;
+    font-size:13px;
+  }
+  .footer-copy{
+    justify-self:unset;
+    font-size:12px;
+    text-align:center;
+  }
+
+  /* Tabs */
+  .tabs{width:100%;justify-content:center;}
+  .tab{padding:9px 14px;font-size:13px;}
+
+  /* Pack card do ebook */
+  .pack-card{max-width:100%;}
+}

@@ -33,7 +33,7 @@
   .nav-links{display:flex;gap:32px;font-size:14.5px;font-weight:500;color:var(--navy);}
   .nav-links a{opacity:0.8;transition:opacity .15s;}
   .nav-links a:hover{opacity:1;color:var(--teal-deep);}
-  .nav-actions{display:flex;gap:12px;align-items:center;}
+  .nav-actions{display:flex;gap:12px;align-items:center;justify-self:end;}
 
   .btn{
     font-family:'Inter',sans-serif;
@@ -686,6 +686,29 @@ footer{
 [data-theme="dark"] .chapter-block h4{color:var(--teal);}
 [data-theme="dark"] .chapter-content p{color:var(--text-dark);}
 
+.nav-user{
+  font-size:13.5px;
+  font-weight:600;
+  color:var(--teal-deep);
+  white-space:nowrap;
+  max-width:160px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#btnSair{
+  font-size:13.5px;
+  font-weight:500;
+  color:var(--text-soft);
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  padding:8px 4px;
+}
+#btnSair:hover{color:var(--teal-deep);}
+[data-theme="dark"] .nav-user{color:var(--teal);}
+[data-theme="dark"] #btnSair{color:var(--text-soft-dark);}
+[data-theme="dark"] #btnSair:hover{color:var(--teal);}
+
 /* RESPONSIVIDADE MOBILE */
 @media (max-width:600px){
 
@@ -759,4 +782,20 @@ footer{
 
   /* Pack card do ebook */
   .pack-card{max-width:100%;}
+}
+
+/* NAVBAR LOGADO */
+.nav-user{
+  font-size:13.5px;
+  font-weight:600;
+  color:var(--teal-deep);
+  white-space:nowrap;
+  max-width:160px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+[data-theme="dark"] .nav-user{color:var(--teal);}
+
+@media (max-width:600px){
+  .nav-user{max-width:90px;font-size:12px;}
 }

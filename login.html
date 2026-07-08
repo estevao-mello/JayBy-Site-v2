@@ -16,9 +16,9 @@
   <div class="auth-blob blob-2"></div>
   <div class="auth-blob blob-3"></div>
   <div class="auth-blob blob-4"></div>
-  <img class="auth-mark mark-1" src="assets/jayby-icon.png" alt="">
-  <img class="auth-mark mark-2" src="assets/jayby-icon.png" alt="">
-  <img class="auth-mark mark-3" src="assets/jayby-icon.png" alt="">
+  <img class="auth-mark mark-1" src="img/jayby-icon.png" alt="">
+  <img class="auth-mark mark-2" src="img/jayby-icon.png" alt="">
+  <img class="auth-mark mark-3" src="img/jayby-icon.png" alt="">
 
   <div class="auth-card-wrap">
     <img class="auth-logo" src="img/logo JayBy - Texto.png" alt="JayBy">
@@ -70,12 +70,39 @@
 
 </div>
 
-<script>
-  document.getElementById('loginForm').addEventListener('submit', function(e){
+<script type="module">
+  import { auth, signInWithEmailAndPassword } from './firebase.js';
+
+  document.getElementById('loginForm').addEventListener('submit', async function(e){
     e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value;
     const msg = document.getElementById('formMsg');
-    msg.textContent = "Login simulado! (protótipo de front-end — ainda sem backend conectado)";
-    msg.className = "form-msg show ok";
+
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = "Entrando...";
+
+    try {
+      await signInWithEmailAndPassword(auth, email, senha);
+      msg.textContent = "Login realizado! Redirecionando...";
+      msg.className = "form-msg show ok";
+      msg.style.background = "";
+      msg.style.color = "";
+      setTimeout(() => { window.location.href = "index.html"; }, 1500);
+    } catch(err) {
+      let errMsg = "Erro ao entrar. Tente novamente.";
+      if(err.code === "auth/invalid-credential") errMsg = "E-mail ou senha incorretos.";
+      if(err.code === "auth/user-not-found") errMsg = "Nenhuma conta encontrada com esse e-mail.";
+      if(err.code === "auth/wrong-password") errMsg = "Senha incorreta. Tente novamente.";
+      if(err.code === "auth/too-many-requests") errMsg = "Muitas tentativas. Aguarde alguns minutos.";
+      msg.textContent = errMsg;
+      msg.className = "form-msg show";
+      msg.style.background = "#FBEAE3";
+      msg.style.color = "#7A2E14";
+      btn.disabled = false;
+      btn.textContent = "Entrar";
+    }
   });
 </script>
 

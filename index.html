@@ -18,13 +18,15 @@
       <a href="#recursos">Adicionais</a>
     </div>
     <div class="nav-actions">
-      <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
-  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-</button>
-      <a class="btn btn-ghost" href="login.html">Entrar</a>
-      <a class="btn btn-solid" href="cadastro.html">Começar agora</a>
-    </div>
+  <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+  <span class="nav-user" id="navUser" style="display:none;font-size:14px;font-weight:600;color:var(--teal-deep);"></span>
+  <a href="login.html" class="btn btn-ghost" id="btnEntrar">Entrar</a>
+  <a href="cadastro.html" class="btn btn-solid btn-lg" id="btnComecar">Começar agora</a>
+  <button class="btn btn-ghost" id="btnSair" style="display:none;">Sair</button>
+</div>
   </nav>
 
   <header class="hero">
@@ -33,7 +35,7 @@
     <p class="hero-tagline">Do nicho ao ebook pronto, em poucos segundos.</p>
     <div class="hero-actions">
       <a class="btn btn-solid btn-lg" href="#demo">Gerar meu ebook</a>
-      <a class="btn btn-outline btn-lg" href="cadastro.html">Criar conta</a>
+      <a href="cadastro.html" class="btn btn-outline btn-lg" id="btnCriarConta">Criar conta</a>
     </div>
   </header>
 
@@ -99,7 +101,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<script>
+<script type="module">
 const BACKEND_URL = "https://jayby-backend-production.up.railway.app";
 let selectedNiche = null;
 
@@ -266,6 +268,39 @@ async function gerarEbook(){
   doc.save(ebook.title.replace(/[^a-zA-Z0-9]+/g, "_").substring(0, 60) + ".pdf");
 }
 }
+
+// Auth state — atualiza navbar conforme login
+import { auth, onAuthStateChanged, signOut } from './firebase.js';
+
+onAuthStateChanged(auth, (user) => {
+  const navUser = document.getElementById('navUser');
+  const btnEntrar = document.getElementById('btnEntrar');
+  const btnComecar = document.getElementById('btnComecar');
+  const btnSair = document.getElementById('btnSair');
+
+  if(user){
+    // Logado
+    const nome = user.displayName || user.email.split('@')[0];
+    navUser.textContent = "Olá, " + nome;
+    navUser.style.display = "inline";
+    btnEntrar.style.display = "none";
+    btnComecar.style.display = "none";
+    btnSair.style.display = "inline-flex";
+    document.getElementById('btnCriarConta').style.display = "none";
+  } else {
+    // Deslogado
+    navUser.style.display = "none";
+    btnEntrar.style.display = "inline-flex";
+    btnComecar.style.display = "inline-flex";
+    btnSair.style.display = "none";
+    document.getElementById('btnCriarConta').style.display = "inline-flex";
+  }
+});
+
+document.getElementById('btnSair').addEventListener('click', async () => {
+  await signOut(auth);
+  window.location.href = "index.html";
+});
 </script>
 </body>
 </html>

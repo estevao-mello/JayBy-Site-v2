@@ -16,9 +16,9 @@
   <div class="auth-blob blob-2"></div>
   <div class="auth-blob blob-3"></div>
   <div class="auth-blob blob-4"></div>
-  <img class="auth-mark mark-1" src="assets/jayby-icon.png" alt="">
-  <img class="auth-mark mark-2" src="assets/jayby-icon.png" alt="">
-  <img class="auth-mark mark-3" src="assets/jayby-icon.png" alt="">
+  <img class="auth-mark mark-1" src="img/jayby-icon.png" alt="">
+  <img class="auth-mark mark-2" src="img/jayby-icon.png" alt="">
+  <img class="auth-mark mark-3" src="img/jayby-icon.png" alt="">
 
   <div class="auth-card-wrap">
     <img class="auth-logo" src="img/logo JayBy - Texto.png" alt="JayBy">
@@ -77,12 +77,18 @@
 
 </div>
 
-<script>
-  document.getElementById('signupForm').addEventListener('submit', function(e){
+<script type="module">
+  import { auth, createUserWithEmailAndPassword } from './firebase.js';
+
+  document.getElementById('signupForm').addEventListener('submit', async function(e){
     e.preventDefault();
+    const nome = document.getElementById('nome').value.trim();
+    const email = document.getElementById('email').value.trim();
     const senha = document.getElementById('senha').value;
     const confirma = document.getElementById('confirma').value;
     const msg = document.getElementById('formMsg');
+
+    // Valida senhas
     if(senha !== confirma){
       msg.textContent = "As senhas não coincidem. Verifique e tente novamente.";
       msg.className = "form-msg show";
@@ -90,8 +96,31 @@
       msg.style.color = "#7A2E14";
       return;
     }
-    msg.textContent = "Conta criada! (protótipo de front-end — ainda sem backend conectado)";
-    msg.className = "form-msg show ok";
+
+    // Desativa botão durante o processo
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = "Criando conta...";
+
+    try {
+      await createUserWithEmailAndPassword(auth, email, senha);
+      msg.textContent = "Conta criada com sucesso! Redirecionando...";
+      msg.className = "form-msg show ok";
+      msg.style.background = "";
+      msg.style.color = "";
+      setTimeout(() => { window.location.href = "index.html"; }, 1500);
+    } catch(err) {
+      let errMsg = "Erro ao criar conta. Tente novamente.";
+      if(err.code === "auth/email-already-in-use") errMsg = "Este e-mail já está cadastrado. Tente fazer login.";
+      if(err.code === "auth/invalid-email") errMsg = "E-mail inválido. Verifique e tente novamente.";
+      if(err.code === "auth/weak-password") errMsg = "Senha muito fraca. Use pelo menos 6 caracteres.";
+      msg.textContent = errMsg;
+      msg.className = "form-msg show";
+      msg.style.background = "#FBEAE3";
+      msg.style.color = "#7A2E14";
+      btn.disabled = false;
+      btn.textContent = "Criar conta";
+    }
   });
 </script>
 

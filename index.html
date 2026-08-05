@@ -99,9 +99,84 @@
     <div class="footer-copy">© 2026 JayBy. Todos os direitos reservados.</div>
   </footer>
 
+  <!-- OVERLAY -->
+<div class="perfil-overlay" id="perfilOverlay"></div>
+
+<!-- DRAWER DE PERFIL -->
+<div class="perfil-drawer" id="perfilDrawer">
+  <div class="perfil-header">
+    <h2>Meu Perfil</h2>
+    <button class="perfil-fechar" id="perfilFechar">✕</button>
+  </div>
+
+  <!-- AVATAR + EMAIL -->
+  <div class="perfil-hero">
+    <div class="perfil-avatar" id="perfilAvatar">?</div>
+    <span class="perfil-email" id="perfilEmail"></span>
+    <span class="perfil-data">Membro desde: <b id="perfilDataCadastro">—</b></span>
+  </div>
+
+  <!-- SEÇÕES -->
+  <div class="perfil-body">
+
+    <!-- Nome -->
+    <div class="perfil-secao">
+      <h3>Nome de exibição</h3>
+      <div class="perfil-campo-row">
+        <input type="text" id="perfilNomeInput" placeholder="Seu nome completo">
+        <button class="btn btn-solid" id="perfilSalvarNome">Salvar</button>
+      </div>
+      <span class="perfil-msg" id="perfilMsgNome"></span>
+    </div>
+
+    <!-- Nicho favorito -->
+    <div class="perfil-secao">
+      <h3>Nicho favorito</h3>
+      <p class="perfil-desc">Seu segmento principal — usado futuramente pra sugerir temas.</p>
+      <div class="perfil-campo-row">
+        <input type="text" id="perfilNichoInput" placeholder="ex: emagrecimento, finanças...">
+        <button class="btn btn-solid" id="perfilSalvarNicho">Salvar</button>
+      </div>
+      <span class="perfil-msg" id="perfilMsgNicho"></span>
+    </div>
+
+    <!-- Histórico de ebooks -->
+    <div class="perfil-secao">
+      <h3>Ebooks gerados</h3>
+      <div id="perfilEbooks">
+        <p style="color:var(--text-soft);font-size:13px;">Nenhum ebook gerado ainda.</p>
+      </div>
+    </div>
+
+    <!-- Trocar senha -->
+    <div class="perfil-secao">
+      <h3>Trocar senha</h3>
+      <div class="perfil-campo-col">
+        <input type="password" id="perfilSenhaAtual" placeholder="Senha atual">
+        <input type="password" id="perfilSenhaNova" placeholder="Nova senha (mín. 6 caracteres)">
+        <button class="btn btn-solid" id="perfilSalvarSenha">Trocar senha</button>
+      </div>
+      <span class="perfil-msg" id="perfilMsgSenha"></span>
+    </div>
+
+    <!-- Excluir conta -->
+    <div class="perfil-secao perfil-secao-danger">
+      <h3>Excluir conta</h3>
+      <p class="perfil-desc">Ação irreversível. Todos os seus dados serão apagados.</p>
+      <div class="perfil-campo-col">
+        <input type="password" id="perfilSenhaExcluir" placeholder="Digite sua senha pra confirmar">
+        <button class="btn" id="perfilExcluirBtn">Excluir minha conta</button>
+      </div>
+      <span class="perfil-msg" id="perfilMsgExcluir"></span>
+    </div>
+
+  </div>
+</div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script type="module">
+  import { abrirPerfil, inicializarPerfil } from './perfil.js';
 const BACKEND_URL = "https://jayby-backend-production.up.railway.app";
 let selectedNiche = null;
 
@@ -192,7 +267,24 @@ async function gerarEbook(){
 
   try{
     const ebook = await gerarEbookBackend(selectedNiche);
-    document.getElementById('ebookGrid').innerHTML = `
+
+// Salva no Firestore se usuário estiver logado
+const user = auth.currentUser;
+if(user){
+  try {
+    await addDoc(collection(db, 'usuarios', user.uid, 'ebooks'), {
+      titulo: ebook.title,
+      subtitulo: ebook.subtitle,
+      intro: ebook.intro,
+      chapters: ebook.chapters,
+      criadoEm: new Date().toISOString()
+    });
+  } catch(e) {
+    console.warn('Erro ao salvar ebook:', e);
+  }
+}
+
+document.getElementById('ebookGrid').innerHTML = `
       <div class="card pack-card">
         <span class="tag">seu ebook</span>
         <h3>${ebook.title}</h3>
@@ -270,7 +362,7 @@ async function gerarEbook(){
 }
 
 // Auth state — atualiza navbar conforme login
-import { auth, onAuthStateChanged, signOut } from './firebase.js';
+import { auth, db, onAuthStateChanged, signOut, collection, addDoc } from './firebase.js';
 
 onAuthStateChanged(auth, (user) => {
   const navUser = document.getElementById('navUser');
@@ -283,6 +375,8 @@ onAuthStateChanged(auth, (user) => {
     const nome = user.displayName || user.email.split('@')[0];
     navUser.textContent = "Olá, " + nome;
     navUser.style.display = "inline";
+    navUser.style.cursor = "pointer";
+    navUser.onclick = () => abrirPerfil();
     btnEntrar.style.display = "none";
     btnComecar.style.display = "none";
     btnSair.style.display = "inline-flex";
@@ -301,6 +395,7 @@ document.getElementById('btnSair').addEventListener('click', async () => {
   await signOut(auth);
   window.location.href = "index.html";
 });
+inicializarPerfil();
 </script>
 </body>
 </html>
